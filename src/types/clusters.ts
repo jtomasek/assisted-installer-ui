@@ -18,6 +18,16 @@ export type NetworkConfigurationValues = ClusterUpdateParams & {
   shareDiscoverySshKey?: boolean;
 };
 
+<<<<<<< HEAD
+export type ClusterDetailsValues = ClusterUpdateParams & {
+  useRedHatDnsService: boolean;
+=======
+export type ClusterConfigurationValues = ClusterUpdateParams & {
+  hostSubnet: string;
+  shareDiscoverySshKey: boolean;
+>>>>>>> 910ccd7... add dns domain
+};
+
 // TODO(mlibra): just name?
 export type BareMetalDiscoveryValues = ClusterUpdateParams;
 
