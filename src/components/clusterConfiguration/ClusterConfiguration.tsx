@@ -5,6 +5,7 @@ import { handleApiError, getErrorMessage } from '../../api/utils';
 import LoadingState from '../ui/uiState/LoadingState';
 import ClusterConfigurationForm from './ClusterConfigurationForm';
 import { AlertsContext } from '../AlertsContextProvider';
+import ClusterWizardStep from '../clusterWizard/ClusterWizardStep';
 
 type ClusterConfigurationProps = {
   cluster: Cluster;
@@ -31,7 +32,11 @@ const ClusterConfiguration: React.FC<ClusterConfigurationProps> = ({ cluster }) 
   if (domains) {
     return <ClusterConfigurationForm cluster={cluster} managedDomains={domains} />;
   }
-  return <LoadingState content="Loading configuration..." />;
+  return (
+    <ClusterWizardStep>
+      <LoadingState content="Loading configuration..." />
+    </ClusterWizardStep>
+  );
 };
 
 export default ClusterConfiguration;

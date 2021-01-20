@@ -13,11 +13,19 @@ const ClusterWizardStep: React.FC<ClusterWizardStepProps> = ({ footer, children 
   const nav = (
     <WizardNav>
       <WizardNavItem
+        key="cluster-details"
+        content="Cluster Details"
+        isCurrent={currentStepId === 'cluster-details'}
+        isDisabled={false}
+        step={1}
+        onNavItemClick={() => setCurrentStepId('cluster-details')}
+      />
+      <WizardNavItem
         key="cluster-configuration"
         content="Cluster Configuration"
         isCurrent={currentStepId === 'cluster-configuration'}
         isDisabled={false}
-        step={1}
+        step={2}
         onNavItemClick={() => setCurrentStepId('cluster-configuration')}
       />
       {/* <WizardNavItem

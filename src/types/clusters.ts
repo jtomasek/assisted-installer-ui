@@ -12,6 +12,10 @@ export type HostSubnet = {
 
 export type HostSubnets = HostSubnet[];
 
+export type ClusterDetailsValues = ClusterUpdateParams & {
+  useRedHatDnsService: boolean;
+};
+
 export type ClusterConfigurationValues = ClusterUpdateParams & {
   hostSubnet: string;
   useRedHatDnsService: boolean;
