@@ -18,7 +18,6 @@ export type ClusterDetailsValues = ClusterUpdateParams & {
 
 export type ClusterConfigurationValues = ClusterUpdateParams & {
   hostSubnet: string;
-  useRedHatDnsService: boolean;
   shareDiscoverySshKey: boolean;
 };
 

@@ -24,7 +24,7 @@ import ClusterToolbar from '../clusters/ClusterToolbar';
 import { InputField } from '../ui/formik';
 import { ToolbarButton, ToolbarText } from '../ui/Toolbar';
 import GridGap from '../ui/GridGap';
-import { Cluster, ClusterUpdateParams, ManagedDomain } from '../../api/types';
+import { Cluster, ClusterUpdateParams } from '../../api/types';
 import { patchCluster, postInstallCluster, getClusters } from '../../api/clusters';
 import { handleApiError, getErrorMessage } from '../../api/utils';
 import Alerts from '../ui/Alerts';
@@ -34,7 +34,6 @@ import {
   nameValidationSchema,
   sshPublicKeyValidationSchema,
   ipBlockValidationSchema,
-  dnsNameValidationSchema,
   hostPrefixValidationSchema,
   vipValidationSchema,
 } from '../ui/formik/validationSchemas';
@@ -52,7 +51,6 @@ const validationSchema = (initialValues: ClusterConfigurationValues, hostSubnets
   Yup.lazy<ClusterConfigurationValues>((values) =>
     Yup.object<ClusterConfigurationValues>().shape({
       name: nameValidationSchema,
-      baseDnsDomain: dnsNameValidationSchema(initialValues.baseDnsDomain),
       clusterNetworkHostPrefix: hostPrefixValidationSchema(values),
       clusterNetworkCidr: ipBlockValidationSchema,
       serviceNetworkCidr: ipBlockValidationSchema,
@@ -64,22 +62,15 @@ const validationSchema = (initialValues: ClusterConfigurationValues, hostSubnets
 
 type ClusterConfigurationFormProps = {
   cluster: Cluster;
-  managedDomains: ManagedDomain[];
 };
 
-const ClusterConfigurationForm: React.FC<ClusterConfigurationFormProps> = ({
-  cluster,
-  managedDomains,
-}) => {
+const ClusterConfigurationForm: React.FC<ClusterConfigurationFormProps> = ({ cluster }) => {
   const [isValidationSectionOpen, setIsValidationSectionOpen] = React.useState(false);
   const [isStartingInstallation, setIsStartingInstallation] = React.useState(false);
   const { alerts, addAlert, clearAlerts } = React.useContext(AlertsContext);
   const dispatch = useDispatch();
   const hostSubnets = React.useMemo(() => getHostSubnets(cluster), [cluster]);
-  const initialValues = React.useMemo(() => getInitialValues(cluster, managedDomains), [
-    cluster,
-    managedDomains,
-  ]);
+  const initialValues = React.useMemo(() => getInitialValues(cluster), [cluster]);
   const memoizedValidationSchema = React.useMemo(
     () => validationSchema(initialValues, hostSubnets),
     [hostSubnets, initialValues],
@@ -104,7 +95,7 @@ const ClusterConfigurationForm: React.FC<ClusterConfigurationFormProps> = ({
 
     // update the cluster configuration
     try {
-      const params = _.omit(values, ['hostSubnet', 'useRedHatDnsService', 'shareDiscoverySshKey']);
+      const params = _.omit(values, ['hostSubnet', 'shareDiscoverySshKey']);
 
       if (values.shareDiscoverySshKey) {
         params.sshPublicKey = cluster.imageInfo.sshPublicKey;
@@ -119,7 +110,7 @@ const ClusterConfigurationForm: React.FC<ClusterConfigurationFormProps> = ({
 
       const { data } = await patchCluster(cluster.id, params);
       formikActions.resetForm({
-        values: getInitialValues(data, managedDomains),
+        values: getInitialValues(data),
       });
       dispatch(updateCluster(data));
     } catch (e) {
@@ -193,11 +184,7 @@ const ClusterConfigurationForm: React.FC<ClusterConfigurationFormProps> = ({
               </GridItem>
               <GridItem span={12} lg={10} xl={6}>
                 <GridGap>
-                  <NetworkConfiguration
-                    cluster={cluster}
-                    hostSubnets={hostSubnets}
-                    managedDomains={managedDomains}
-                  />
+                  <NetworkConfiguration cluster={cluster} hostSubnets={hostSubnets} />
                   <TextContent>
                     <Text component="h2">Security</Text>
                   </TextContent>

@@ -90,14 +90,10 @@ export const isAdvConf = (cluster: Cluster) => {
   );
 };
 
-export const getInitialValues = (
-  cluster: Cluster,
-  managedDomains: ManagedDomain[],
-): ClusterConfigurationValues => {
+export const getInitialValues = (cluster: Cluster): ClusterConfigurationValues => {
   const defaultNetworkSettings = getDefaultNetworkSettings(cluster.clusterNetworkCidr as string);
   return {
     name: cluster.name || '',
-    baseDnsDomain: cluster.baseDnsDomain || '',
     clusterNetworkCidr: cluster.clusterNetworkCidr || defaultNetworkSettings.clusterNetworkCidr,
     clusterNetworkHostPrefix:
       cluster.clusterNetworkHostPrefix || defaultNetworkSettings.clusterNetworkHostPrefix,
@@ -106,9 +102,6 @@ export const getInitialValues = (
     ingressVip: cluster.vipDhcpAllocation ? '' : cluster.ingressVip || '',
     sshPublicKey: cluster.sshPublicKey || '',
     hostSubnet: getSubnetFromMachineNetworkCidr(cluster.machineNetworkCidr),
-    useRedHatDnsService:
-      !!cluster.baseDnsDomain &&
-      managedDomains.map((d) => d.domain).includes(cluster.baseDnsDomain),
     shareDiscoverySshKey:
       !!cluster.imageInfo.sshPublicKey && cluster.sshPublicKey === cluster.imageInfo.sshPublicKey,
     vipDhcpAllocation: cluster.vipDhcpAllocation,

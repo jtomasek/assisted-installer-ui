@@ -2,10 +2,22 @@ import React from 'react';
 import * as Yup from 'yup';
 import _ from 'lodash';
 import { Formik, FormikHelpers } from 'formik';
-import { Cluster, ClusterUpdateParams } from '../../api/types';
+import { Cluster, ClusterUpdateParams, ManagedDomain } from '../../api/types';
 import ClusterWizardStep from './ClusterWizardStep';
-import { nameValidationSchema, validJSONSchema } from '../ui/formik/validationSchemas';
-import { ButtonVariant, Form, Grid, GridItem, Stack, StackItem } from '@patternfly/react-core';
+import {
+  dnsNameValidationSchema,
+  nameValidationSchema,
+  validJSONSchema,
+} from '../ui/formik/validationSchemas';
+import {
+  ButtonVariant,
+  Form,
+  Grid,
+  GridItem,
+  Spinner,
+  Stack,
+  StackItem,
+} from '@patternfly/react-core';
 import InputField from '../ui/formik/InputField';
 import SelectField from '../ui/formik/SelectField';
 import PullSecret from '../clusters/PullSecret';
@@ -23,31 +35,22 @@ import { updateCluster } from '../../features/clusters/currentClusterSlice';
 import { useDispatch } from 'react-redux';
 import { AlertsContext } from '../AlertsContextProvider';
 import ClusterWizardContext from './ClusterWizardContext';
-
-type ClusterDetailsProps = {
-  cluster: Cluster;
-};
-
-const ClusterDetails: React.FC<ClusterDetailsProps> = ({ cluster }) => {
-  const pullSecret = usePullSecretFetch();
-  if (pullSecret === undefined) {
-    return (
-      <ClusterWizardStep>
-        <LoadingState />
-      </ClusterWizardStep>
-    );
-  }
-  return <ClusterDetailsForm cluster={cluster} pullSecret={pullSecret} />;
-};
-
-export default ClusterDetails;
+import Alerts from '../ui/Alerts';
+import CheckboxField from '../ui/formik/CheckboxField';
+import { getManagedDomains } from '../../api/domains';
+import ToolbarText from '../ui/Toolbar/ToolbarText';
 
 type ClusterDetailsFormProps = {
   cluster: Cluster;
   pullSecret: string;
+  managedDomains: ManagedDomain[];
 };
 
-const ClusterDetailsForm: React.FC<ClusterDetailsFormProps> = ({ cluster, pullSecret }) => {
+const ClusterDetailsForm: React.FC<ClusterDetailsFormProps> = ({
+  cluster,
+  pullSecret,
+  managedDomains,
+}) => {
   const { alerts, addAlert, clearAlerts } = React.useContext(AlertsContext);
   const { setCurrentStepId } = React.useContext(ClusterWizardContext);
   const history = useHistory();
@@ -56,20 +59,24 @@ const ClusterDetailsForm: React.FC<ClusterDetailsFormProps> = ({ cluster, pullSe
   React.useEffect(() => {
     nameInputRef.current?.focus();
   }, []);
+  const { name, openshiftVersion = '', pullSecretSet, baseDnsDomain } = cluster;
 
-  const { name, openshiftVersion = '', pullSecretSet } = cluster;
   const initialValues = {
     name,
     openshiftVersion,
     pullSecret,
-    useRedHatDnsService: false,
+    baseDnsDomain,
+    useRedHatDnsService:
+      !!baseDnsDomain && managedDomains.map((d) => d.domain).includes(baseDnsDomain),
   };
+
   const validationSchema = React.useCallback(
     () =>
       Yup.object({
         name: nameValidationSchema,
         openshiftVersion: Yup.string().required('Required'),
         pullSecret: validJSONSchema.required('Pull secret must be provided.'),
+        baseDnsDomain: dnsNameValidationSchema(initialValues.baseDnsDomain),
       }),
     [],
   );
@@ -91,15 +98,11 @@ const ClusterDetailsForm: React.FC<ClusterDetailsFormProps> = ({ cluster, pullSe
       captureException(e, 'Failed to perform unique cluster name validation.');
     }
 
-    // update the cluster configuration
     try {
       console.log('values', values);
       const params = _.omit(values, ['useRedHatDnsService']);
 
       const { data } = await patchCluster(cluster.id, params);
-      // formikActions.resetForm({
-      //   values: getInitialValues(data, managedDomains),
-      // });
       dispatch(updateCluster(data));
       setCurrentStepId('cluster-configuration');
     } catch (e) {
@@ -115,61 +118,150 @@ const ClusterDetailsForm: React.FC<ClusterDetailsFormProps> = ({ cluster, pullSe
       validationSchema={validationSchema}
       onSubmit={handleSubmit}
     >
-      {({ submitForm, isSubmitting, isValid, dirty }) => {
+      {({ submitForm, isSubmitting, isValid, dirty, values, setFieldValue }) => {
+        const { name: clusterName, baseDnsDomain, useRedHatDnsService } = values;
+
+        const baseDnsHelperText = (
+          <>
+            All DNS records must be subdomains of this base and include the cluster name. This
+            cannot be changed after cluster installation. The full cluster address will be: <br />
+            <strong>
+              {clusterName || '[Cluster Name]'}.{baseDnsDomain || '[example.com]'}
+            </strong>
+          </>
+        );
+
+        const toggleRedHatDnsService = (checked: boolean) =>
+          setFieldValue('baseDnsDomain', checked ? managedDomains.map((d) => d.domain)[0] : '');
+
         const form = (
-          <Form
-            id="wizard-cluster-details__form"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                submitForm();
-              }
-            }}
-          >
-            <Grid hasGutter>
-              <GridItem span={12} lg={10} xl={9} xl2={7}>
-                <Stack hasGutter>
-                  <StackItem>
-                    <InputField ref={nameInputRef} label="Cluster Name" name="name" isRequired />
-                  </StackItem>
-                  <StackItem>
-                    <SelectField
-                      label="OpenShift Version"
-                      name="openshiftVersion"
-                      options={[{ label: openshiftVersion, value: openshiftVersion }]}
-                      // getHelperText={getOpenshiftVersionHelperText}
-                      isDisabled
-                      isRequired
-                    />
-                  </StackItem>
-                  <StackItem>
-                    <PullSecret pullSecret={pullSecret} />
-                  </StackItem>
-                </Stack>
-              </GridItem>
-            </Grid>
-          </Form>
+          <Grid hasGutter>
+            <GridItem span={12} lg={10} xl={9} xl2={7}>
+              <Form
+                id="wizard-cluster-details__form"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    submitForm();
+                  }
+                }}
+              >
+                <InputField ref={nameInputRef} label="Cluster Name" name="name" isRequired />
+                <SelectField
+                  label="OpenShift Version"
+                  name="openshiftVersion"
+                  options={[{ label: openshiftVersion, value: openshiftVersion }]}
+                  // getHelperText={getOpenshiftVersionHelperText}
+                  isDisabled
+                  isRequired
+                />
+                <PullSecret pullSecret={pullSecret} />
+                {!!managedDomains.length && (
+                  <CheckboxField
+                    name="useRedHatDnsService"
+                    label="Use a temporary 60-day domain"
+                    helperText="A base domain will be provided for temporary, non-production clusters."
+                    onChange={toggleRedHatDnsService}
+                  />
+                )}
+                {values.useRedHatDnsService ? (
+                  <SelectField
+                    label="Base Domain"
+                    name="baseDnsDomain"
+                    helperText={baseDnsHelperText}
+                    options={managedDomains.map((d) => ({
+                      label: `${d.domain} (${d.provider})`,
+                      value: d.domain,
+                    }))}
+                    isRequired
+                  />
+                ) : (
+                  <InputField
+                    label="Base Domain"
+                    name="baseDnsDomain"
+                    helperText={baseDnsHelperText}
+                    placeholder="example.com"
+                    isDisabled={useRedHatDnsService}
+                    isRequired
+                  />
+                )}
+              </Form>
+            </GridItem>
+          </Grid>
         );
         const footer = (
-          <ClusterToolbar>
-            <ToolbarButton
-              name="save"
-              variant={ButtonVariant.primary}
-              isDisabled={isSubmitting || !isValid || !dirty}
-              onClick={submitForm}
-            >
-              Next
-            </ToolbarButton>
+          <Stack hasGutter>
+            {!!alerts.length && (
+              <StackItem>
+                <Alerts />
+              </StackItem>
+            )}
+            <StackItem>
+              <ClusterToolbar>
+                <ToolbarButton
+                  name="save"
+                  variant={ButtonVariant.primary}
+                  isDisabled={isSubmitting || !isValid}
+                  onClick={submitForm}
+                >
+                  Next
+                </ToolbarButton>
 
-            <ToolbarButton
-              variant={ButtonVariant.link}
-              onClick={() => history.push(`${routeBasePath}/clusters`)}
-            >
-              Cancel
-            </ToolbarButton>
-          </ClusterToolbar>
+                <ToolbarButton
+                  variant={ButtonVariant.link}
+                  onClick={() => history.push(`${routeBasePath}/clusters`)}
+                >
+                  Cancel
+                </ToolbarButton>
+                {isSubmitting && (
+                  <ToolbarText>
+                    <Spinner size="md" /> Submitting...
+                  </ToolbarText>
+                )}
+              </ClusterToolbar>
+            </StackItem>
+          </Stack>
         );
         return <ClusterWizardStep footer={footer}>{form}</ClusterWizardStep>;
       }}
     </Formik>
   );
 };
+
+type ClusterDetailsProps = {
+  cluster: Cluster;
+};
+
+const ClusterDetails: React.FC<ClusterDetailsProps> = ({ cluster }) => {
+  const [managedDomains, setManagedDomains] = React.useState<ManagedDomain[]>();
+  const { addAlert } = React.useContext(AlertsContext);
+
+  React.useEffect(() => {
+    const fetchManagedDomains = async () => {
+      try {
+        const { data } = await getManagedDomains();
+        setManagedDomains(data);
+      } catch (e) {
+        setManagedDomains([]);
+        handleApiError(e, () =>
+          addAlert({ title: 'Failed to retrieve managed domains', message: getErrorMessage(e) }),
+        );
+      }
+    };
+    fetchManagedDomains();
+  }, [addAlert]);
+
+  const pullSecret = usePullSecretFetch();
+
+  if (pullSecret === undefined || !managedDomains) {
+    return (
+      <ClusterWizardStep>
+        <LoadingState />
+      </ClusterWizardStep>
+    );
+  }
+  return (
+    <ClusterDetailsForm cluster={cluster} pullSecret={pullSecret} managedDomains={managedDomains} />
+  );
+};
+
+export default ClusterDetails;
