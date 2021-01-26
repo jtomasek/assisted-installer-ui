@@ -338,14 +338,14 @@ const HostsTable: React.FC<HostsTableProps> = ({
       const host = rowData.host;
       const { id, requestedHostname } = host;
       const hostname = requestedHostname || rowData.inventory?.hostname || id;
-      eventsDialog.setShowDialog({ hostId: id, hostname });
+      eventsDialog.open({ hostId: id, hostname });
     },
     [eventsDialog],
   );
 
   const onEditHost = React.useCallback(
     (event: React.MouseEvent, rowIndex: number, rowData: IRowData) => {
-      editHostDialog.setShowDialog({ host: rowData.host, inventory: rowData.inventory });
+      editHostDialog.open({ host: rowData.host, inventory: rowData.inventory });
     },
     [editHostDialog],
   );
@@ -402,7 +402,7 @@ const HostsTable: React.FC<HostsTableProps> = ({
           title: 'Reset host',
           id: `button-reset-host-${hostname}`,
           onClick: () => {
-            resetHostDialog.setShowDialog({ hostId: host.id, hostname });
+            resetHostDialog.open({ hostId: host.id, hostname });
           },
         });
       }
@@ -423,7 +423,7 @@ const HostsTable: React.FC<HostsTableProps> = ({
           title: 'Delete host',
           id: `button-delete-host-${hostname}`,
           onClick: () => {
-            deleteHostDialog.setShowDialog({ hostId: host.id, hostname });
+            deleteHostDialog.open({ hostId: host.id, hostname });
           },
         });
       }
@@ -471,45 +471,43 @@ const HostsTable: React.FC<HostsTableProps> = ({
         <TableBody rowKey={rowKey} />
       </Table>
       <EventsModal
-        title={`Host Events${
-          eventsDialog.showDialog ? `: ${eventsDialog.showDialog.hostname}` : ''
-        }`}
+        title={`Host Events${eventsDialog.isOpen ? `: ${eventsDialog.data?.hostname}` : ''}`}
         entityKind="host"
         cluster={cluster}
-        hostId={eventsDialog.showDialog?.hostId}
-        onClose={() => eventsDialog.setShowDialog(undefined)}
-        isOpen={!!eventsDialog.showDialog}
+        hostId={eventsDialog.data?.hostId}
+        onClose={() => eventsDialog.close()}
+        isOpen={eventsDialog.isOpen}
       />
       <ResetHostModal
-        hostname={resetHostDialog.showDialog?.hostname}
-        onClose={() => resetHostDialog.setShowDialog(undefined)}
-        isOpen={!!resetHostDialog.showDialog}
+        hostname={resetHostDialog.data?.hostname}
+        onClose={() => resetHostDialog.close()}
+        isOpen={resetHostDialog.isOpen}
         onReset={() => {
-          onHostReset(resetHostDialog.showDialog?.hostId);
-          resetHostDialog.setShowDialog(undefined);
+          onHostReset(resetHostDialog.data?.hostId);
+          resetHostDialog.close();
         }}
       />
       <DeleteHostModal
-        hostname={deleteHostDialog.showDialog?.hostname}
-        onClose={() => deleteHostDialog.setShowDialog(undefined)}
-        isOpen={!!deleteHostDialog.showDialog}
+        hostname={deleteHostDialog.data?.hostname}
+        onClose={() => deleteHostDialog.close()}
+        isOpen={deleteHostDialog.isOpen}
         onDelete={() => {
-          onDeleteHost(deleteHostDialog.showDialog?.hostId);
-          deleteHostDialog.setShowDialog(undefined);
+          onDeleteHost(deleteHostDialog.data?.hostId);
+          deleteHostDialog.close();
         }}
       />
       <EditHostModal
-        host={editHostDialog.showDialog?.host}
-        inventory={editHostDialog.showDialog?.inventory}
+        host={editHostDialog.data?.host}
+        inventory={editHostDialog.data?.inventory}
         cluster={cluster}
-        onClose={() => editHostDialog.setShowDialog(undefined)}
-        isOpen={!!editHostDialog.showDialog}
-        onSave={() => editHostDialog.setShowDialog(undefined)}
+        onClose={() => editHostDialog.close()}
+        isOpen={editHostDialog.isOpen}
+        onSave={() => editHostDialog.close()}
       />
       <AdditionalNTPSourcesDialog
         cluster={cluster}
-        isOpen={!!additionalNTPSourcesDialog.showDialog}
-        onClose={() => additionalNTPSourcesDialog.setShowDialog(undefined)}
+        isOpen={additionalNTPSourcesDialog.isOpen}
+        onClose={() => additionalNTPSourcesDialog.close()}
       />
     </>
   );

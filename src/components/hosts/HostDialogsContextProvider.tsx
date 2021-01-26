@@ -1,5 +1,9 @@
 import React from 'react';
 import { Host, Inventory } from '../../api/types';
+import dialogsReducer, {
+  openDialog as openDialogAction,
+  closeDialog as closeDialogAction,
+} from '../../features/dialogs/dialogsSlice';
 
 type HostIdAndHostname = {
   hostId: Host['id'];
@@ -11,61 +15,83 @@ type EditHostProps = {
   inventory: Inventory;
 };
 
+type DialogsDataTypes = {
+  eventsDialog: HostIdAndHostname;
+  editHostDialog: EditHostProps;
+  deleteHostDialog: HostIdAndHostname;
+  resetHostDialog: HostIdAndHostname;
+  additionalNTPSourcesDialog: void;
+};
+
+type DialogId =
+  | 'eventsDialog'
+  | 'editHostDialog'
+  | 'deleteHostDialog'
+  | 'resetHostDialog'
+  | 'additionalNTPSourcesDialog';
+
 export type HostDialogsContextType = {
-  eventsDialog: {
-    showDialog: HostIdAndHostname | undefined;
-    setShowDialog: React.Dispatch<React.SetStateAction<HostIdAndHostname | undefined>>;
-  };
-  editHostDialog: {
-    showDialog: EditHostProps | undefined;
-    setShowDialog: React.Dispatch<React.SetStateAction<EditHostProps | undefined>>;
-  };
-  deleteHostDialog: {
-    showDialog: HostIdAndHostname | undefined;
-    setShowDialog: React.Dispatch<React.SetStateAction<HostIdAndHostname | undefined>>;
-  };
-  resetHostDialog: {
-    showDialog: HostIdAndHostname | undefined;
-    setShowDialog: React.Dispatch<React.SetStateAction<HostIdAndHostname | undefined>>;
-  };
-  additionalNTPSourcesDialog: {
-    showDialog: boolean | undefined;
-    setShowDialog: React.Dispatch<React.SetStateAction<boolean | undefined>>;
+  [key in DialogId]: {
+    isOpen: boolean;
+    open: (data: DialogsDataTypes[key]) => void;
+    close: () => void;
+    data?: DialogsDataTypes[key];
   };
 };
 
 const defaultDialogValue = {
-  showDialog: undefined,
-  setShowDialog: () => undefined,
+  isOpen: false,
+  open: (data: void | HostIdAndHostname | EditHostProps) => {
+    console.warn('Trying to open a dialog but HostDialogsContextProvider is not rendered');
+  },
+  close: () => {
+    console.warn('Trying to open a dialog but HostDialogsContextProvider is not rendered');
+  },
+  data: undefined,
 };
 
-export const HostDialogsContext = React.createContext<HostDialogsContextType>({
+const initialState = {
   eventsDialog: defaultDialogValue,
   editHostDialog: defaultDialogValue,
   deleteHostDialog: defaultDialogValue,
   resetHostDialog: defaultDialogValue,
   additionalNTPSourcesDialog: defaultDialogValue,
-});
+};
+
+export const HostDialogsContext = React.createContext<HostDialogsContextType>(initialState);
 
 export const HostDialogsContextProvider: React.FC = ({ children }) => {
-  const [hostForEvents, setHostForEvents] = React.useState<HostIdAndHostname>();
-  const [hostToEdit, setHostToEdit] = React.useState<EditHostProps>();
-  const [hostToDelete, setHostToDelete] = React.useState<HostIdAndHostname>();
-  const [hostToReset, setHostToReset] = React.useState<HostIdAndHostname>();
-  const [showAdditionalNTPSourcesDialog, setShowAdditionalNTPSourcesDialog] = React.useState<
-    boolean
-  >();
+  const [dialogsState, dispatchDialogsAction] = React.useReducer(dialogsReducer, {});
 
-  const context = {
-    eventsDialog: { showDialog: hostForEvents, setShowDialog: setHostForEvents },
-    editHostDialog: { showDialog: hostToEdit, setShowDialog: setHostToEdit },
-    deleteHostDialog: { showDialog: hostToDelete, setShowDialog: setHostToDelete },
-    resetHostDialog: { showDialog: hostToReset, setShowDialog: setHostToReset },
-    additionalNTPSourcesDialog: {
-      showDialog: showAdditionalNTPSourcesDialog,
-      setShowDialog: setShowAdditionalNTPSourcesDialog,
-    },
-  };
+  function getOpenDialog<DataType>(dialogId: string) {
+    return (data: DataType) => dispatchDialogsAction(openDialogAction({ dialogId, data }));
+  }
+
+  const getCloseDialog = (dialogId: string) => () =>
+    dispatchDialogsAction(closeDialogAction({ dialogId }));
+
+  const dialogIds: DialogId[] = [
+    'eventsDialog',
+    'editHostDialog',
+    'deleteHostDialog',
+    'resetHostDialog',
+    'additionalNTPSourcesDialog',
+  ];
+
+  const context = React.useMemo(
+    () =>
+      dialogIds.reduce((context, dialogId) => {
+        context[dialogId] = {
+          isOpen: !!dialogsState[dialogId],
+          open: (data: DialogsDataTypes[typeof dialogId]) =>
+            getOpenDialog<DialogsDataTypes[typeof dialogId]>(dialogId)(data),
+          close: () => getCloseDialog(dialogId)(),
+          data: dialogsState[dialogId],
+        };
+        return context;
+      }, initialState),
+    [dialogIds, dialogsState],
+  );
 
   return <HostDialogsContext.Provider value={context}>{children}</HostDialogsContext.Provider>;
 };

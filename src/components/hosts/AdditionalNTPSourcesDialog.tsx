@@ -163,8 +163,8 @@ export const AdditionalNTPSourcesDialog: React.FC<AdditionalNTPSourcesDialogProp
 
 export const AdditionalNTPSourcesDialogToggle: React.FC = () => {
   const {
-    additionalNTPSourcesDialog: { setShowDialog },
+    additionalNTPSourcesDialog: { open },
   } = React.useContext(HostDialogsContext);
 
-  return <AlertActionLink onClick={() => setShowDialog(true)}>Add NTP sources</AlertActionLink>;
+  return <AlertActionLink onClick={() => open()}>Add NTP sources</AlertActionLink>;
 };
