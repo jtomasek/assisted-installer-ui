@@ -21,6 +21,7 @@ import { patchCluster } from '../../api/clusters';
 import { updateCluster } from '../../features/clusters/currentClusterSlice';
 import { getErrorMessage, handleApiError } from '../../api/utils';
 import { trimCommaSeparatedList } from '../ui/formik/utils';
+import { HostDialogsContext } from './HostDialogsContextProvider';
 
 type AdditionalNTPSourcesFormProps = {
   cluster: Cluster;
@@ -143,7 +144,7 @@ type AdditionalNTPSourcesDialogProps = {
   onClose: () => void;
 };
 
-const AdditionalNTPSourcesDialog: React.FC<AdditionalNTPSourcesDialogProps> = ({
+export const AdditionalNTPSourcesDialog: React.FC<AdditionalNTPSourcesDialogProps> = ({
   cluster,
   isOpen,
   onClose,
@@ -160,29 +161,10 @@ const AdditionalNTPSourcesDialog: React.FC<AdditionalNTPSourcesDialogProps> = ({
   </Modal>
 );
 
-type AdditionalNTPSourcesDialogToggleProps = {
-  cluster: Cluster;
-  onToggle?: (isOpen: boolean) => void;
-};
+export const AdditionalNTPSourcesDialogToggle: React.FC = () => {
+  const {
+    additionalNTPSourcesDialog: { setShowDialog },
+  } = React.useContext(HostDialogsContext);
 
-export const AdditionalNTPSourcesDialogToggle: React.FC<AdditionalNTPSourcesDialogToggleProps> = ({
-  cluster,
-  onToggle,
-}) => {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const setOpen = (isOpen: boolean) => {
-    onToggle && onToggle(isOpen);
-    setIsOpen(isOpen);
-  };
-
-  return (
-    <>
-      <AlertActionLink onClick={() => setOpen(true)}>Add NTP sources</AlertActionLink>
-      <AdditionalNTPSourcesDialog
-        isOpen={isOpen}
-        cluster={cluster}
-        onClose={() => setOpen(false)}
-      />
-    </>
-  );
+  return <AlertActionLink onClick={() => setShowDialog(true)}>Add NTP sources</AlertActionLink>;
 };
