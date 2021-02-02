@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export type DialogPayload = {
   dialogId: string;
-  data?: any;
+  data?: unknown;
 };
 
 export const initialState = {};
@@ -12,10 +12,12 @@ export const dialogsSlice = createSlice({
   name: 'alerts',
   reducers: {
     openDialog: (state, action: PayloadAction<DialogPayload>) => {
-      state[action.payload.dialogId] = action.payload.data;
+      state[action.payload.dialogId] = action.payload.data || {};
+      return state;
     },
     closeDialog: (state, action: PayloadAction<DialogPayload>) => {
       state[action.payload.dialogId] = undefined;
+      return state;
     },
   },
 });

@@ -63,7 +63,7 @@ import EditHostModal from './EditHostModal';
 import Hostname from './Hostname';
 import HostsCount from './HostsCount';
 import HostPropertyValidationPopover from './HostPropertyValidationPopover';
-import { HostDialogsContext, HostDialogsContextProvider } from './HostDialogsContextProvider';
+import { HostDialogsContextProvider, useHostDialogsContext } from './HostDialogsContext';
 import { AdditionalNTPSourcesDialog } from './AdditionalNTPSourcesDialog';
 
 import './HostsTable.css';
@@ -212,7 +212,8 @@ const HostsTable: React.FC<HostsTableProps> = ({
     deleteHostDialog,
     resetHostDialog,
     additionalNTPSourcesDialog,
-  } = React.useContext(HostDialogsContext);
+  } = useHostDialogsContext();
+
   const [openRows, setOpenRows] = React.useState({} as OpenRows);
   const [sortBy, setSortBy] = React.useState({
     index: 1, // Hostname-column
@@ -496,6 +497,7 @@ const HostsTable: React.FC<HostsTableProps> = ({
           deleteHostDialog.close();
         }}
       />
+      {editHostDialog.isOpen && <>Hey, edit Host modal should be now open!</>}
       <EditHostModal
         host={editHostDialog.data?.host}
         inventory={editHostDialog.data?.inventory}

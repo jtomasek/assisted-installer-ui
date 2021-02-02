@@ -21,7 +21,7 @@ import { patchCluster } from '../../api/clusters';
 import { updateCluster } from '../../features/clusters/currentClusterSlice';
 import { getErrorMessage, handleApiError } from '../../api/utils';
 import { trimCommaSeparatedList } from '../ui/formik/utils';
-import { HostDialogsContext } from './HostDialogsContextProvider';
+import { useHostDialogsContext } from './HostDialogsContext';
 
 type AdditionalNTPSourcesFormProps = {
   cluster: Cluster;
@@ -164,7 +164,7 @@ export const AdditionalNTPSourcesDialog: React.FC<AdditionalNTPSourcesDialogProp
 export const AdditionalNTPSourcesDialogToggle: React.FC = () => {
   const {
     additionalNTPSourcesDialog: { open },
-  } = React.useContext(HostDialogsContext);
+  } = useHostDialogsContext();
 
   return <AlertActionLink onClick={() => open()}>Add NTP sources</AlertActionLink>;
 };
