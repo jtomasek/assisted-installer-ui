@@ -27,10 +27,14 @@ function main {
   fi
 
   sync
-  cp ./package.json "${ASSISTED_UI_ROOT}"/node_modules/${NPM_PROJECT}/package.json || true
-  cp ./package.json "${UHC_PORTAL}"/node_modules/${NPM_PROJECT}/package.json || true
+  if [ -d "${ASSISTED_UI_ROOT}" ]; then
+    cp ./package.json "${ASSISTED_UI_ROOT}"/node_modules/${NPM_PROJECT}/package.json || true
+  fi
+  if [ -d "${UHC_PORTAL}" ]; then
+    cp ./package.json "${UHC_PORTAL}"/node_modules/${NPM_PROJECT}/package.json || true
+  fi
 
-  while inotifywait -r -e modify,create,delete,move ./dist ; do
+  while fswatch -r ./dist ; do
     sleep 2 # give JS bundler time to write everything
     sync
   done
