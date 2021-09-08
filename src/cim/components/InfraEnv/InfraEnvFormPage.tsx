@@ -61,9 +61,7 @@ const validationSchema = (usedNames: string[]) =>
       location: Yup.string().required(),
       baseDomain: Yup.string().required(),
       pullSecret: Yup.string().required(),
-      sshPublicKey: sshPublicKeyValidationSchema.required(
-        'An SSH key is required to debug hosts as they register.',
-      ),
+      sshPublicKey: sshPublicKeyValidationSchema,
       httpProxy: httpProxyValidationSchema(values, 'httpsProxy'),
       httpsProxy: httpProxyValidationSchema(values, 'httpProxy'), // share the schema, httpS is currently not supported
       noProxy: noProxyValidationSchema,
