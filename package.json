@@ -21,7 +21,6 @@
     "start-assisted-ui": "env-cmd ./scripts/start-assisted-ui.sh",
     "start-uhc-portal": "./scripts/start-uhc-portal.sh",
     "sync-to-ui": "./scripts/sync-dist.sh",
-    "prepare": "install-peers",
     "test": "run-s test:circular test:lint",
     "test:type-check": "tsc --noEmit",
     "test:lint": "eslint --ext .js,.jsx,.ts,.tsx --color --max-warnings=0 ./src",
@@ -63,6 +62,7 @@
     "yup": "^0.28.3"
   },
   "devDependencies": {
+    "@babel/plugin-transform-modules-commonjs": "^7.16.0",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
@@ -140,6 +140,15 @@
     "moduleNameMapper": {
       "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/__mocks__/fileMock.js",
       "\\.(css|less)$": "<rootDir>/__mocks__/styleMock.js"
+    }
+  },
+  "babel": {
+    "env": {
+      "test": {
+        "plugins": [
+          "@babel/plugin-transform-modules-commonjs"
+        ]
+      }
     }
   }
 }
