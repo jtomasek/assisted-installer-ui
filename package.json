@@ -63,6 +63,8 @@
   },
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "^7.16.0",
+    "@swc/cli": "^0.1.51",
+    "@swc/core": "^1.2.106",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
@@ -102,7 +104,10 @@
     "redux-devtools-extension": "^2.13.8",
     "rimraf": "^3.0.2",
     "sw2dts": "^2.6.3",
-    "typescript": "^3.8.3"
+    "swc-loader": "^0.1.15",
+    "typescript": "^3.8.3",
+    "webpack": "^5.61.0",
+    "webpack-cli": "^4.9.1"
   },
   "files": [
     "dist"
