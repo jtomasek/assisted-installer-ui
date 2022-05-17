@@ -16,7 +16,7 @@ import { global_palette_green_500 as okColor } from '@patternfly/react-tokens/di
 import { global_warning_color_100 as warningColor } from '@patternfly/react-tokens/dist/js/global_warning_color_100';
 
 import { LabelValue } from '../../../common';
-import { InfraEnvK8sResource, SecretK8sResource } from '../../types';
+import { InfraEnvK8sResource, NMStateK8sResource, SecretK8sResource } from '../../types';
 import { AGENT_LOCATION_LABEL_KEY } from '../common';
 import EditPullSecretModal, { EditPullSecretModalProps } from '../modals/EditPullSecretModal';
 import EditSSHKeyModal, { EditSSHKeyModalProps } from '../modals/EditSSHKeyModal';
@@ -30,7 +30,7 @@ type EditItemProps = {
   isWarning?: boolean;
 };
 
-const EditItem: React.FC<EditItemProps> = ({ title, onEdit, isLoading, isWarning }) => {
+const EditItem = ({ title, onEdit, isLoading, isWarning }: EditItemProps) => {
   let icon = <CheckCircleIcon color={okColor.value} />;
   if (isLoading) {
     icon = <Spinner isSVG size="md" />;
@@ -56,6 +56,7 @@ type EnvironmentDetailsProps = {
   onEditNtpSources: EditNtpSourcesModalProps['onSubmit'];
   hasAgents: boolean;
   hasBMHs: boolean;
+  infraNMStates: NMStateK8sResource[];
 };
 
 const EnvironmentDetails: React.FC<EnvironmentDetailsProps> = ({
@@ -66,6 +67,7 @@ const EnvironmentDetails: React.FC<EnvironmentDetailsProps> = ({
   onEditNtpSources,
   hasAgents,
   hasBMHs,
+  infraNMStates,
 }) => {
   const [editPullSecret, setEditPullSecret] = React.useState(false);
   const [editSSHKey, setEditSSHKey] = React.useState(false);
@@ -177,6 +179,17 @@ const EnvironmentDetails: React.FC<EnvironmentDetailsProps> = ({
                   />
                   <EditItem title={t('ai:NTP sources')} onEdit={() => setEditNtpSources(true)} />
                 </>
+              </DescriptionListDescription>
+            </DescriptionListGroup>
+            <DescriptionListGroup>
+              <DescriptionListTerm>Hosts' network configuration</DescriptionListTerm>
+              <DescriptionListDescription>
+                <EditItem
+                  title="Static network configuration"
+                  onEdit={() => setEditPullSecret(true)}
+                  isLoading={pullSecretLoading}
+                  isWarning={!pullSecret}
+                />
               </DescriptionListDescription>
             </DescriptionListGroup>
           </DescriptionList>
