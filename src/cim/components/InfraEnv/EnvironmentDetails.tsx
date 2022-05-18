@@ -22,6 +22,7 @@ import EditPullSecretModal, { EditPullSecretModalProps } from '../modals/EditPul
 import EditSSHKeyModal, { EditSSHKeyModalProps } from '../modals/EditSSHKeyModal';
 import EditNtpSourcesModal, { EditNtpSourcesModalProps } from '../modals/EditNtpSourcesModal';
 import { useTranslation } from '../../../common/hooks/use-translation-wrapper';
+import EditStaticNetworkConfigurationDialog from '../modals/EditStaticNetworkConfigurationDialog';
 
 type EditItemProps = {
   title: string;
@@ -72,6 +73,7 @@ const EnvironmentDetails: React.FC<EnvironmentDetailsProps> = ({
   const [editPullSecret, setEditPullSecret] = React.useState(false);
   const [editSSHKey, setEditSSHKey] = React.useState(false);
   const [editNtpSources, setEditNtpSources] = React.useState(false);
+  const [editStaticNetworkConfiguration, setEditStaticNetworkConfiguration] = React.useState(false);
   const [pullSecret, setPullSecret] = React.useState<SecretK8sResource>();
   const [pullSecretError, setPullSecretError] = React.useState<string>();
   const [pullSecretLoading, setPullSecretLoading] = React.useState(true);
@@ -219,6 +221,13 @@ const EnvironmentDetails: React.FC<EnvironmentDetailsProps> = ({
         onClose={() => setEditNtpSources(false)}
         infraEnv={infraEnv}
         onSubmit={onEditNtpSources}
+      />
+      <EditStaticNetworkConfigurationDialog
+        isOpen={editStaticNetworkConfiguration}
+        onClose={() => setEditStaticNetworkConfiguration(false)}
+        infraEnvNMStateConfigs={infraNMStates}
+        hasAgents={hasAgents}
+        hasBMHs={hasBMHs}
       />
     </>
   );
