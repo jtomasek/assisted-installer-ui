@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import applyCaseMiddleware from 'axios-case-converter';
 import { camelCase } from 'camel-case';
+import { ASSISTED_SERVICE_API_ROOT } from '../config/constants';
 
 // conforms basePath in swagger.json
 export const BASE_PATH = '/api/assisted-install';
@@ -19,7 +20,7 @@ const getDefaultClient = () => {
   const client = axios.create();
   client.interceptors.request.use((cfg) => ({
     ...cfg,
-    url: `${process.env.REACT_APP_API_ROOT}${cfg.url}`,
+    url: `${ASSISTED_SERVICE_API_ROOT}${cfg.url}`,
   }));
   return applyCaseMiddleware(client, axiosCaseConverterOptions);
 };
