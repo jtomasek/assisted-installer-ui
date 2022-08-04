@@ -2,6 +2,7 @@ import {
   AgentClusterInstallK8sResource,
   ClusterDeploymentK8sResource,
   InfraEnvK8sResource,
+  NMStateNetworkConfiguration,
   SecretK8sResource,
 } from '../../types';
 import { EnvironmentStepFormValues } from './InfraEnvFormPage';
@@ -141,4 +142,21 @@ export const getInfraEnv = (
     };
   }
   return infraEnv;
+};
+
+export const getNMStateConfig = (
+  spec: NMStateNetworkConfiguration,
+  infraEnv: InfraEnvK8sResource,
+) => {
+  const name = infraEnv.metadata?.name;
+  return {
+    apiVersion: 'agent-install.openshift.io/v1beta1',
+    kind: 'NMStateConfig',
+    metadata: {
+      generateName: name ? `${name}-` : '',
+      namespace: infraEnv.metadata?.namespace,
+      labels: infraEnv?.spec?.nmStateConfigLabelSelector?.matchLabels || {},
+    },
+    spec,
+  };
 };

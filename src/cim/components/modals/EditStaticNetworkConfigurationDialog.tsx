@@ -12,15 +12,21 @@ import {
 } from '@patternfly/react-core';
 import { Formik, FormikProps } from 'formik';
 import { NMStateK8sResource } from '../../types';
-import { getWarningMessage } from './utils';
-import { UploadSSH } from '../../../common';
-import EditSSHKeyModal, { EditSSHKeyModalProps } from './EditSSHKeyModal';
-import { EditSSHKeyFormikValues } from './types';
+import { EditSSHKeyModalProps } from './EditSSHKeyModal';
+import Yaml from 'js-yaml';
+import { CodeEditor, Language } from '@patternfly/react-code-editor';
+
+const parseNMStateConfigsToYaml = (nmStateConfigs: NMStateK8sResource[]) => {
+  return nmStateConfigs.reduce((configsYaml: string, nmStateConfig: NMStateK8sResource) => {
+    const config = nmStateConfig.spec?.config;
+    return configsYaml.concat('\n---\n', Yaml.dump(config));
+  }, '');
+};
 
 export type EditStaticNetworkConfigurationProps = {
   isOpen: boolean;
   onClose: VoidFunction;
-  // onSubmit: (values: EditSSHKeyFormikValues, infraEnv: InfraEnvK8sResource) => Promise<unknown>;
+  onSubmit: (values: unknown) => void;
   infraEnvNMStateConfigs: NMStateK8sResource[];
   hasAgents: boolean;
   hasBMHs: boolean;
@@ -29,34 +35,36 @@ export type EditStaticNetworkConfigurationProps = {
 const EditStaticNetworkConfigurationDialog = ({
   isOpen,
   onClose,
-  infraEnv,
+  infraEnvNMStateConfigs,
   onSubmit,
-  hasAgents,
-  hasBMHs,
 }: EditStaticNetworkConfigurationProps) => {
   const [error, setError] = React.useState<string | undefined>();
-  const warningMsg = getWarningMessage(hasAgents, hasBMHs);
+  const code = parseNMStateConfigsToYaml(infraEnvNMStateConfigs);
+  console.log('code', code);
   return (
     <Modal
       aria-label="Edit static network configuration dialog"
       title="Edit static network configuration"
       isOpen={isOpen}
       onClose={onClose}
-      variant={ModalVariant.medium}
+      variant={ModalVariant.large}
       id="edit-static-network-configuration-modal"
       hasNoBodyWrapper
     >
-      <Formik<EditSSHKeyFormikValues>
-        initialValues={{
-          sshPublicKey: infraEnv.spec?.sshAuthorizedKey || '',
-        }}
-        validationSchema={validationSchema}
-        onSubmit={async (values) => {
+      <Formik<Record<string, unknown>>
+        initialValues={
+          {
+            // nmStateConfig: '',
+          }
+        }
+        // validationSchema={validationSchema}
+        onSubmit={(values) => {
           try {
-            await onSubmit(values, infraEnv);
+            onSubmit(values);
+            console.log(values);
             onClose();
           } catch (err) {
-            setError(err?.message || 'An error occured');
+            // setError(err?.message || 'An error occured');
           }
         }}
         validateOnMount
@@ -66,10 +74,18 @@ const EditStaticNetworkConfigurationDialog = ({
             <ModalBoxBody>
               <Stack hasGutter>
                 <StackItem>
-                  <Alert isInline variant="warning" title={warningMsg} />
-                </StackItem>
-                <StackItem>
-                  <UploadSSH />
+                  <CodeEditor
+                    isDarkTheme
+                    isLineNumbersVisible
+                    // isReadOnly={isReadOnly}
+                    isMinimapVisible
+                    isLanguageLabelVisible
+                    code={code}
+                    // onChange={onChange}
+                    language={Language.yaml}
+                    // onEditorDidMount={onEditorDidMount}
+                    height="400px"
+                  />
                 </StackItem>
                 {error && (
                   <StackItem>

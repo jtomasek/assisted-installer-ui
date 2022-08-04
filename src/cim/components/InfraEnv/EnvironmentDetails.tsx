@@ -55,6 +55,7 @@ type EnvironmentDetailsProps = {
   onEditPullSecret: EditPullSecretModalProps['onSubmit'];
   onEditSSHKey: EditSSHKeyModalProps['onSubmit'];
   onEditNtpSources: EditNtpSourcesModalProps['onSubmit'];
+  onEditNMStateConfigs: (values: unknown) => void;
   hasAgents: boolean;
   hasBMHs: boolean;
   infraNMStates: NMStateK8sResource[];
@@ -66,6 +67,7 @@ const EnvironmentDetails: React.FC<EnvironmentDetailsProps> = ({
   onEditPullSecret,
   onEditSSHKey,
   onEditNtpSources,
+  onEditNMStateConfigs,
   hasAgents,
   hasBMHs,
   infraNMStates,
@@ -73,7 +75,7 @@ const EnvironmentDetails: React.FC<EnvironmentDetailsProps> = ({
   const [editPullSecret, setEditPullSecret] = React.useState(false);
   const [editSSHKey, setEditSSHKey] = React.useState(false);
   const [editNtpSources, setEditNtpSources] = React.useState(false);
-  const [editStaticNetworkConfiguration, setEditStaticNetworkConfiguration] = React.useState(false);
+  const [editNetworkConfiguration, setEditNetworkConfiguration] = React.useState(false);
   const [pullSecret, setPullSecret] = React.useState<SecretK8sResource>();
   const [pullSecretError, setPullSecretError] = React.useState<string>();
   const [pullSecretLoading, setPullSecretLoading] = React.useState(true);
@@ -188,7 +190,7 @@ const EnvironmentDetails: React.FC<EnvironmentDetailsProps> = ({
               <DescriptionListDescription>
                 <EditItem
                   title="Static network configuration"
-                  onEdit={() => setEditPullSecret(true)}
+                  onEdit={() => setEditNetworkConfiguration(true)}
                   isLoading={pullSecretLoading}
                   isWarning={!pullSecret}
                 />
@@ -223,9 +225,10 @@ const EnvironmentDetails: React.FC<EnvironmentDetailsProps> = ({
         onSubmit={onEditNtpSources}
       />
       <EditStaticNetworkConfigurationDialog
-        isOpen={editStaticNetworkConfiguration}
-        onClose={() => setEditStaticNetworkConfiguration(false)}
+        isOpen={editNetworkConfiguration}
+        onClose={() => setEditNetworkConfiguration(false)}
         infraEnvNMStateConfigs={infraNMStates}
+        onSubmit={onEditNMStateConfigs}
         hasAgents={hasAgents}
         hasBMHs={hasBMHs}
       />
